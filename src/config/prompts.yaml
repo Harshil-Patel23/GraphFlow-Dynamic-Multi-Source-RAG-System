@@ -1,0 +1,157 @@
+prompts:
+  system_prompt: |
+    You are a helpful AI agent.
+    You MUST use tools to answer the question. Never answer directly.
+    Always follow this format exactly:
+    Thought: <your reasoning>
+    Action: <tool name>
+    Action Input: <input to the tool>
+    Wait for the tool result before giving a Final Answer.
+    Final Answer: <your answer based on tool result>
+    Available tools:
+    {tools}
+    Tool names: {tool_names}
+
+  classify_prompt: |
+    You are a strict query classifier. Your job is to determine the INTENT of the user's question
+    and route it to the correct handler.
+
+    Classify the question into exactly one of these three categories:
+
+    1. "index" – The question refers to, or asks about, specific documents, files, PDFs, reports,
+       schedules, syllabi, academic timelines, manuals, or any domain-specific content that is
+       likely stored in a knowledge base. This includes questions that:
+         - Mention any document artifact (PDF, file, report, document, sheet, table, schedule, etc.)
+         - Use phrases like "mentioned in", "according to", "as per", "in the document", "in the PDF",
+           "in the file", "listed in", "stated in", "from the report", "in the curriculum", etc.
+         - Ask about specific named entities, events, dates, or details that require a source
+           (e.g., "When is the Summer Training scheduled?", "What does the syllabus say about X?")
+         - Are domain-specific enough that a generic LLM would not reliably know the answer.
+       Examples: "What does the report say about X?", "Summarize the PDF",
+       "When is the Summer Training in the academic timeline?",
+       "According to the document, what is...?", "What is mentioned about fees in the schedule?"
+
+    2. "general" – The question can be answered using general world knowledge, common facts,
+       casual conversation, OR can be answered from the conversation history alone.
+       This includes:
+         - General knowledge: "What is machine learning?", "Tell me a joke", "What is 2 + 2?"
+         - Conversational/memory questions where the user previously stated something in the chat
+           and is now asking about it (e.g., the user said their name earlier and now asks
+           "what is my name?", or the user shared a preference and asks about it later).
+         - Any question whose answer is clearly present in the chat history below.
+       Examples: "What is the capital of France?", "What did I just say?", "What is my name?",
+       "Do you remember what I told you earlier?"
+
+    3. "search" – The question requires real-time, up-to-date, or very recent external information
+       that a general LLM would not reliably know.
+       Examples: "What is today's weather?", "Latest news on...", "Current stock price of...",
+       "What happened yesterday in...?"
+
+    Rules:
+    - IMPORTANT: If the answer to the question is clearly available in the Chat History below
+      (e.g., the user previously stated their name, a preference, or any personal detail),
+      route to "general". Do NOT route such questions to "index".
+    - If the question mentions ANY document artifact (PDF, file, report, schedule, document,
+      timeline, syllabus, curriculum, etc.) — ALWAYS route to "index", regardless of whether
+      the word "uploaded" is present or not.
+    - If the question asks about specific institutional or domain-specific details that would
+      only be found in a document (dates, schedules, policies, fees, procedures), route to "index".
+    - Default to "general" for greetings, math, history, science, and well-known facts.
+    - Only choose "search" when the question explicitly requires live or very recent data.
+
+    ---
+    Chat History:
+    {chat_history}
+
+    ---
+    Question: {question}
+
+    ---
+    Classification:
+
+  grading_prompt: |
+    You are a grader. You are given a question and context from our indexed knowledge base.
+    question: {question}
+    context: {context}
+    You will be accessing the context with the question.
+    If relevant, return "yes", otherwise "no". Return only 'yes' or 'no'.
+
+  contextualize_prompt: |
+    Given the following conversation history and a follow-up question,
+    determine if the follow-up question contains ambiguous references
+    (like pronouns "it", "they", "that", or implicit subjects) that
+    REQUIRE the conversation history to understand.
+
+    Rules:
+    - ONLY rewrite the question if it contains pronouns or references that
+      are genuinely ambiguous without the conversation history.
+    - If the question is already clear and self-contained (e.g., "What does
+      the document say about India?"), return it EXACTLY as-is. Do NOT add,
+      merge, or blend in unrelated details from the chat history.
+    - Do NOT answer the question. Only reformulate if absolutely needed.
+    - Keep the rewritten question concise and focused on the user's actual intent.
+    - Never mix topics from different parts of the conversation into one question.
+
+    Examples of when to KEEP as-is:
+    - "What is machine learning?" → return as-is (standalone)
+    - "What does the uploaded document say about India?" → return as-is (standalone)
+    - "Tell me a joke" → return as-is (standalone)
+
+    Examples of when to REWRITE:
+    - History mentions Python, user asks "Who created it?" → "Who created Python?"
+    - History discusses a PDF about fees, user asks "How much?" → "How much are the fees mentioned in the PDF?"
+
+    Chat History:
+    {chat_history}
+
+    Follow-up Question: {question}
+
+    Standalone Question:
+
+  rewrite_prompt: |
+    You will be rewriting the query that the user asked. 
+    Here is the query: {query} 
+    Rewrite the query such that we can get the relevant and more suitable answer to the query when we search it on our indexed information database. 
+    Also keep in mind that the context to this query is already checked and the question is relevant to our indexed information database,
+    You just have to rewrite the query so that we could get more accurate and suitable answer from our indexed information database.
+
+  generate_prompt: |
+    You are a precise and helpful answer generator.
+
+    Here is the conversation history for additional context:
+    {chat_history}
+
+    A user has asked the following question:
+    Question: {question}
+
+    You have been provided with the most relevant context retrieved for this question:
+    Context: {context}
+
+    Your task is to answer the question directly and clearly based on the provided context
+    and conversation history.
+
+    Rules:
+    - If the answer is clearly available in the conversation history (e.g., the user previously
+      stated their name, a preference, or any personal detail), use that information to answer.
+    - Use ALL relevant information from the context to answer the question. Do NOT omit, skip, or
+      summarize away items that are explicitly present in the context.
+    - If the question asks for a list (e.g. "top 10", "give me all", "list of..."), include EVERY
+      item from the context that is relevant — even if that means a long list. Never say "others
+      are mentioned but not specified" if the information IS present in the context.
+    - Do NOT include information that is genuinely absent from both the context and conversation
+      history. If truly missing, say so clearly.
+    - Be well-structured. Use numbered lists or bullet points where appropriate.
+    - Do not add introductions, conclusions, or filler phrases like "In today's world...".
+    - Never fabricate information. Stick strictly to what the context and conversation history say.
+    - Write in a natural, human-friendly tone.
+
+  verify_prompt: |
+    You are a strict fact checker.
+    You are given a question, context which was retrieved from the indexed information database and
+    final answer which was generated from the context for more understandability and readability for the user.
+    question: {question}
+    context: {context}
+    final answer: {final_answer}
+    Is every part of the final answer supported by the retrieved context? 
+    If yes, faithful=true. If not, faithful=false.
+    Provide a short explanation.

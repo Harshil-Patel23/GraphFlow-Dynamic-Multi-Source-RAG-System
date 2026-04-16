@@ -1,3 +1,16 @@
+venv/
+.env
+memory_problem_implementation_plan.md
+run_all.bat
+run_all_one_window.bat
+Persistent User Storage.md
+app.log
+adaptive_rag_graph_flow.svg
+pinecone_implementation.txt
+CHANGES.md
+implementation_plan.md
+credentials.txt
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[codz]
