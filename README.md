@@ -1,4 +1,4 @@
-# GraphFlow - Agentic AI Chatbot
+# GraphFlow - Dynamic Agentic RAG System
 
 [![Python 3.9+](https://img.shields.io/badge/Python-3.9+-blue.svg)](https://www.python.org/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-Latest-green.svg)](https://fastapi.tiangolo.com/)
