@@ -48,7 +48,7 @@ if "session_id" not in st.session_state:
 with st.form("auth_form"):
     username = st.text_input("Username")
     password = st.text_input("Password", type="password")
-    mode = st.radio("Choose action:", ["Login", "Create Account"])
+    mode = st.radio("Choose action:", ["Login", "Create Account"],index=1)
     submit = st.form_submit_button("Submit")
 
 

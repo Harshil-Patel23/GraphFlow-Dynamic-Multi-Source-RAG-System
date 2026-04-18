@@ -10,6 +10,7 @@ pinecone_implementation.txt
 CHANGES.md
 implementation_plan.md
 credentials.txt
+rust_auth/Cargo.lock
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
